@@ -1,0 +1,16 @@
+$ /Users/ray/Documents/demo-widget/serverless/webhooks/node_modules/.bin/serverless info --json --stage dev
+{
+  "info": {
+    "service": "pte2-webhooks",
+    "stage": "dev",
+    "region": "us-east-1",
+    "apiKeys": {},
+    "endpoints": [],
+    "functions": {
+      "stripe": "pte2-webhooks-dev-stripe",
+      "twilio": "pte2-webhooks-dev-twilio",
+      "transcribe": "pte2-webhooks-dev-transcribe"
+    },
+    "layers": []
+  }
+}

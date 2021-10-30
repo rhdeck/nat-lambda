@@ -1,0 +1,81 @@
+service: nattest-${self:custom.config.name}
+provider:
+  name: aws
+  runtime: nodejs12.x
+  environment:
+    mainRole:
+      Fn::GetAtt:
+        - MainRole
+        - "Arn"
+plugins:
+  - serverless-webpack
+  - serverless-api-gateway-throttling
+  - serverless-plugin-info-json
+  - serverless-plugin-warmup
+  - serverless-prune-plugin
+  - serverless-vpc-plugin
+resources:
+  Description: "Listener for scheduled events"
+  Resources:
+    MainRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: "${self:service}-${opt:stage, self:provider.stage}-MainRole"
+        Policies:
+          - PolicyName: VPCPolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - "sts:AssumeRole"
+                  Resource: "*"
+                - Effect: "Allow"
+                  Action:
+                    - "logs:CreateLogGroup"
+                    - "logs:CreateLogStream"
+                    - "logs:PutLogEvents"
+                    - "logs:DescribeLogStreams"
+                  Resource:
+                    - "arn:aws:logs:*:*:*"
+                - Effect: "Allow"
+                  Action:
+                    - "lambda:InvokeFunction"
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - "ec2:DescribeNetworkInterfaces"
+                    - "ec2:CreateNetworkInterface"
+                    - "ec2:DeleteNetworkInterface"
+                    - "ec2:DescribeInstances"
+                    - "ec2:AttachNetworkInterface"
+                  Resource: "*"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Service:
+                  - "lambda.amazonaws.com"
+                  - "apigateway.amazonaws.com"
+                  - events.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+
+custom:
+  config: ${file(./config.json)}
+  apiGatewayThrottling:
+    maxRequestsPerSecond: 100
+    maxConcurrentRequests: 50
+  warmup:
+    prewarm: true
+    role: MainRole
+  prune:
+    automatic: true
+    number: 1
+  vpcConfig:
+    enabled: true
+    createNatGateway: 1
+    exportOutputs: true
+    subnetGroups:
+    createParameters: true
